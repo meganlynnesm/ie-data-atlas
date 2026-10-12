@@ -19,10 +19,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ireland Data Atlas</title>
 
-  <!-- Fonts from Google Fonts: a narrow sans for labels, a mono for numbers. -->
+  <!-- The design uses Gill Sans (like the slide deck). Gill Sans isn't on
+       Google Fonts, so we load Lato as a free stand-in for computers that
+       don't have Gill Sans installed. See --font in style.css. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
   <!-- Our own styles. -->
   <link rel="stylesheet" href="css/style.css">
@@ -32,7 +34,7 @@
   <!-- LEFT PANEL: title, controls, legend, credits -->
   <aside class="panel">
     <header>
-      <p class="kicker">G4DP · Assignment 01</p>
+      <p class="kicker">Digi-scape × Landscape</p>
       <h1>Ireland’s data<br>landscape</h1>
       <p class="lede">
         Where Ireland’s data centres sit, set against the peat, wind and
@@ -46,6 +48,7 @@
         <button id="btn-play" type="button">▶ Play</button>
         <button id="btn-flat" type="button">Flat</button>
         <button id="btn-axon" type="button">Axon</button>
+        <button id="btn-theme" type="button">Night</button>
       </div>
       <!-- A slider from 0 (flat) to 1 (fully exploded). -->
       <label class="scrub">

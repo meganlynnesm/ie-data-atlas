@@ -9,22 +9,34 @@
 */
 
 /* ---------------------------------------------------------------
-   1. COLOUR TOKENS
+   1. COLOUR AND TYPE TOKENS
    ":root" is the whole page. Variables start with "--" and are used
-   later with var(--name). Change a colour here and it changes
-   everywhere. These are the colloquium palette colours.
+   later with var(--name). Change a value here and it changes
+   everywhere. Colours are the project palette.
 ---------------------------------------------------------------- */
 :root {
-  --off-black: #15120F;
-  --brique:    #761C28;
-  --blush:     #FFD2D9;
-  --rose:      #FF88BE;
-  --pistache:  #B9AC39;
-  --olive:     #433B0C;
-  --cream:     #F3ECE4;
+  /* The palette */
+  --oat:          #F1EDE0;
+  --dusty-blush:  #ECCBD1;
+  --pistache:     #B9AC39;
+  --olive:        #433B0C;
+  --berry:        #D6338A;
+  --off-black:    #15120F;
 
-  --ink-dim: rgba(243, 236, 228, 0.55);   /* cream at 55% opacity */
-  --line:    rgba(243, 236, 228, 0.22);
+  /* ROLES. The rest of the CSS (and the map) uses these role names,
+     not the colours directly. That is what makes the theme switch work:
+     the Night theme below only has to swap these few lines. */
+  --bg:       var(--oat);                 /* page and map background */
+  --ink:      var(--off-black);           /* text and linework */
+  --ink-dim:  rgba(21, 18, 15, 0.62);     /* off-black at 62% */
+  --line:     rgba(21, 18, 15, 0.18);     /* faint rules */
+  --land:     #E4DDC8;                    /* island fill: oat, a touch darker */
+  --panel:    rgba(236, 203, 209, 0.45);  /* dusty blush panel behind text */
+
+  /* Gill Sans, like the slide deck. Not every computer has it, so we list
+     fallbacks: "Gill Sans MT" comes with Microsoft Office on Windows,
+     and Lato (loaded from Google Fonts) is a free look-alike. */
+  --font: "Gill Sans", "Gill Sans MT", "Gill Sans Nova", Lato, sans-serif;
 
   /* THE ANIMATION DIAL.
      --t goes from 0 (flat map) to 1 (exploded axonometric).
@@ -39,15 +51,27 @@
   --lift:   235px;   /* moves the exploded stack down so it stays centred */
 }
 
+/* NIGHT THEME: off-black background with oat text, like the slide deck.
+   map.js sets data-theme="night" on <html> when you press the button. */
+:root[data-theme="night"] {
+  --bg:      var(--off-black);
+  --ink:     var(--oat);
+  --ink-dim: rgba(241, 237, 224, 0.62);
+  --line:    rgba(241, 237, 224, 0.2);
+  --land:    rgba(67, 59, 12, 0.45);      /* olive, see-through */
+  --panel:   rgba(236, 203, 209, 0.08);
+}
+
 /* box-sizing: border-box makes width include padding (less maths). */
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   height: 100%;
-  background: var(--off-black);
-  color: var(--cream);
-  font-family: "Archivo Narrow", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  transition: background 0.4s, color 0.4s;   /* smooth theme switch */
 }
 
 /* ---------------------------------------------------------------
@@ -67,88 +91,106 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 26px;
 }
 
+/* Wide letter-spacing, like "D I G I S C A P E" in the deck. */
 .kicker {
-  font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: var(--rose);
-  margin: 0 0 10px;
+  color: var(--berry);
+  margin: 0 0 14px;
 }
 
 h1 {
   font-size: 34px;
-  line-height: 1.02;
-  font-weight: 600;
+  line-height: 1.05;
+  font-weight: 700;
+  font-style: italic;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
-  margin: 0 0 12px;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
 }
 
-.lede { color: var(--ink-dim); font-size: 15px; line-height: 1.4; margin: 0; }
+/* The intro paragraph sits on a soft dusty-blush panel. */
+.lede {
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--panel);
+}
 
 h2 {
-  font-size: 12px;
-  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 500;
-  margin: 0 0 12px;
+  letter-spacing: 0.3em;
+  margin: 0 0 10px;
 }
-.hint { color: var(--ink-dim); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.hint { color: var(--ink-dim); font-weight: 400; text-transform: none; letter-spacing: 0.02em; margin-left: 4px; }
 
 /* ---------------------------------------------------------------
    3. CONTROLS
 ---------------------------------------------------------------- */
-.buttons { display: flex; gap: 8px; margin-bottom: 14px; }
+.buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 14px; }
 
 button {
-  font: 500 12px "IBM Plex Mono", monospace;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--cream);
+  color: var(--ink);
   background: transparent;
   border: 1px solid var(--line);
-  padding: 8px 12px;
+  padding: 8px 4px;
   cursor: pointer;
 }
 /* ":hover" applies only while the mouse is over the element. */
-button:hover { border-color: var(--cream); }
+button:hover { border-color: var(--ink); }
 
 .scrub {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 11px "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-style: italic;
+  letter-spacing: 0.16em;
   color: var(--ink-dim);
   text-transform: uppercase;
 }
-.scrub input { flex: 1; accent-color: var(--rose); }
+.scrub input { flex: 1; accent-color: var(--berry); }
 
 /* ---------------------------------------------------------------
    4. LEGEND (filled in by map.js)
 ---------------------------------------------------------------- */
-.legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
 .legend li {
   display: grid;
   grid-template-columns: 22px 1fr;
-  gap: 4px 10px;
+  gap: 3px 10px;
   padding: 8px 6px;
   cursor: default;
   border-left: 2px solid transparent;
 }
-.legend li:hover { border-left-color: var(--rose); background: rgba(243,236,228,0.04); }
-.legend .num  { font: 11px "IBM Plex Mono", monospace; color: var(--ink-dim); padding-top: 2px; }
-.legend .name { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; }
-.legend .desc { grid-column: 2; font-size: 13px; color: var(--ink-dim); line-height: 1.35; }
+.legend li:hover { border-left-color: var(--berry); background: var(--panel); }
+.legend .num  { font-size: 11px; font-style: italic; color: var(--ink-dim); padding-top: 3px; }
+.legend .name { font-size: 15px; font-weight: 700; font-style: italic; text-transform: uppercase; letter-spacing: 0.1em; }
+.legend .desc { grid-column: 2; font-size: 13px; font-style: italic; color: var(--ink-dim); line-height: 1.35; }
 .legend .key  { grid-column: 2; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-                font: 10px "IBM Plex Mono", monospace; color: var(--ink-dim); margin-top: 4px; }
+                font-size: 11px; color: var(--ink-dim); margin-top: 4px; }
 .legend .key svg { display: block; }
 
-.credits { margin-top: auto; font-size: 11px; line-height: 1.45; color: var(--ink-dim); }
+/* Data attribution in olive, as in the palette (lighter on Night). */
+.credits { margin-top: auto; font-size: 11px; font-style: italic; line-height: 1.45; color: var(--olive); }
+:root[data-theme="night"] .credits { color: var(--ink-dim); }
 .credits p { margin: 0; }
 
 /* ---------------------------------------------------------------
@@ -210,8 +252,8 @@ button:hover { border-color: var(--cream); }
 .plane .frame {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(243, 236, 228, 0.45);
-  opacity: var(--t);
+  border: 1px solid var(--ink);
+  opacity: calc(var(--t) * 0.4);
 }
 
 /* The layer name, written along the left edge of each plane,
@@ -224,8 +266,11 @@ button:hover { border-color: var(--cream); }
   transform-origin: left top;
   transform: rotate(90deg);
   white-space: nowrap;
-  font: 600 20px "Archivo Narrow", sans-serif;
-  letter-spacing: 0.12em;
+  font-family: var(--font);
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   /* Only fade in during the last 40% of the animation, so labels don't
      pile up while the layers are still close together.
@@ -252,8 +297,8 @@ button:hover { border-color: var(--cream); }
      out of the map. Its length grows with --t. */
   transform: rotateX(90deg);
   transform-origin: top center;
-  background: var(--cream);
-  opacity: calc(var(--t) * 0.8);
+  background: var(--ink);
+  opacity: calc(var(--t) * 0.7);
 }
 
 /* The text at the top of each pole. It is turned back by the same
@@ -262,10 +307,13 @@ button:hover { border-color: var(--cream); }
   position: absolute;
   transform-style: preserve-3d;
   white-space: nowrap;
-  font: 500 11px "IBM Plex Mono", monospace;
-  letter-spacing: 0.06em;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--cream);
+  color: var(--ink);
   opacity: calc((var(--t) - 0.6) * 2.5);
 }
 .pole-label span { position: absolute; bottom: 2px; }

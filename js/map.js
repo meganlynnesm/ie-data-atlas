@@ -28,25 +28,32 @@
 const WIDTH = 520;
 const HEIGHT = 640;
 
-// The colloquium palette (same as the CSS variables).
+// The project palette (same as the CSS variables).
 const C = {
-  offBlack: "#15120F",
-  brique:   "#761C28",
-  blush:    "#FFD2D9",
-  rose:     "#FF88BE",
-  pistache: "#B9AC39",
-  olive:    "#433B0C",
-  cream:    "#F3ECE4",
+  oat:        "#F1EDE0",
+  dustyBlush: "#ECCBD1",
+  pistache:   "#B9AC39",
+  olive:      "#433B0C",
+  berry:      "#D6338A",
+  offBlack:   "#15120F",
 };
 
+// Colours that change with the Day/Night theme are NOT written here.
+// Instead we point at the CSS role variables, e.g. "var(--ink)", and set
+// them with .style() rather than .attr(), because only CSS styles
+// understand var(). Switch the theme and these update by themselves.
+const INK = "var(--ink)";
+const LAND = "var(--land)";
+
 // Peat types from the Irish Peat Soils Map, keyed by the code in the data.
-// Colours are earthy tints built from the palette's pistache, olive and cream.
+// The palette has one soft pink (dusty blush), so the five types are
+// lighter and deeper shades of it, with "other peat" a greyer blush.
 const PEAT_TYPES = {
-  1: { name: "Raised bog",              colour: "#B9AC39" },  // pistache
-  2: { name: "Lowland blanket bog",     colour: "#DCD38A" },  // light pistache
-  3: { name: "Mountain blanket bog",    colour: "#F3ECE4" },  // cream
-  4: { name: "Fen",                     colour: "#FFD2D9" },  // blush
-  5: { name: "Other peat soil",         colour: "#7A6E22" },  // lifted olive
+  1: { name: "Raised bog",           colour: "#C47F8E" },  // deep blush
+  2: { name: "Lowland blanket bog",  colour: "#D9A3AE" },  // mid blush
+  3: { name: "Mountain blanket bog", colour: "#ECCBD1" },  // dusty blush
+  4: { name: "Fen",                  colour: "#9E5469" },  // darkest blush
+  5: { name: "Other peat soil",      colour: "#B9A7A2" },  // grey blush
 };
 
 // Where the data lives (relative to index.html).
@@ -67,9 +74,8 @@ const LAYERS = [
       g.append("path")
         .datum(d.outline)                // .datum() attaches one piece of data
         .attr("d", path)                 // "d" is the SVG attribute for a shape's outline
-        .attr("fill", C.olive)
-        .attr("fill-opacity", 0.35)
-        .attr("stroke", C.cream)
+        .style("fill", LAND)
+        .style("stroke", INK)
         .attr("stroke-width", 0.8);
 
       // .selectAll().data().join() is D3's core pattern:
@@ -80,11 +86,11 @@ const LAYERS = [
         .attr("class", "county")
         .attr("d", path)
         .attr("fill", "none")
-        .attr("stroke", C.cream)
-        .attr("stroke-opacity", 0.25)
+        .style("stroke", INK)
+        .attr("stroke-opacity", 0.22)
         .attr("stroke-width", 0.5);
     },
-    key: () => `<svg width="28" height="12"><rect x="1" y="1" width="26" height="10" fill="${C.olive}" fill-opacity=".6" stroke="${C.cream}" stroke-width=".8"/></svg> county lines`,
+    key: () => `<svg width="28" height="12"><rect x="1" y="1" width="26" height="10" style="fill:var(--land);stroke:var(--ink)" stroke-width=".8"/></svg> county lines`,
   },
 
   {
@@ -117,7 +123,7 @@ const LAYERS = [
         .attr("class", "osm")
         .attr("d", path)
         .attr("fill", "none")
-        .attr("stroke", C.pistache)
+        .attr("stroke", PEAT_TYPES[1].colour)
         .attr("stroke-width", 0.6);
     },
     // Object.values() turns the PEAT_TYPES object into a list we can loop over.
@@ -126,7 +132,7 @@ const LAYERS = [
          <svg width="10" height="10"><rect width="10" height="10" fill="${t.colour}"/></svg>${t.name}</span>`
     ).join("") +
       `<span style="display:inline-flex;align-items:center;gap:4px">
-         <svg width="10" height="10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="${C.pistache}"/></svg>NI bog (OSM)</span>`,
+         <svg width="10" height="10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="${PEAT_TYPES[1].colour}"/></svg>NI bog (OSM)</span>`,
   },
 
   {
@@ -146,26 +152,27 @@ const LAYERS = [
         .attr("cy", (f) => projection(f.geometry.coordinates)[1])
         // "??" means: use the left value, but if it's missing use the right one.
         .attr("r", (f) => r(f.properties.mw ?? 5))
-        .attr("fill", C.blush)
-        .attr("fill-opacity", 0.12)
-        .attr("stroke", C.blush)
+        .attr("fill", "none")
+        .style("stroke", INK)
+        .attr("stroke-opacity", 0.75)
         .attr("stroke-width", 0.8);
     },
     key: () => [5, 50, 190].map((mw) => {
       const r = d3.scaleSqrt().domain([0, 200]).range([1.5, 13])(mw);
-      return `<svg width="${2 * r + 2}" height="28"><circle cx="${r + 1}" cy="14" r="${r}" fill="${C.blush}" fill-opacity=".12" stroke="${C.blush}"/></svg>`;
+      return `<svg width="${2 * r + 2}" height="28"><circle cx="${r + 1}" cy="14" r="${r}" fill="none" style="stroke:var(--ink)"/></svg>`;
     }).join("") + " 5 · 50 · 190 MW",
   },
 
   {
     id: "broadband",
     name: "Broadband speed",
-    desc: "Average fixed download speed from Ookla speed tests. Slower places are drawn bigger and brighter.",
+    desc: "Average fixed download speed from Ookla speed tests. Olive = slow, pistache = fast. Slower places are also drawn bigger.",
     draw: (g, path, projection, d) => {
       // speed_class goes 1 (slowest) to 6 (fastest).
-      // We flip it so SLOW areas stand out: big, bright rose dots.
-      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.6]);
-      const colour = d3.scaleLinear().domain([1, 6]).range([C.rose, C.brique]);
+      // Colour ramp: olive (slow, dark end) -> pistache (fast, light end).
+      // Size runs the other way so SLOW areas still stand out.
+      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.7]);
+      const colour = d3.scaleLinear().domain([1, 6]).range([C.olive, C.pistache]);
 
       g.selectAll("circle")
         .data(d.broadband.features)
@@ -177,8 +184,8 @@ const LAYERS = [
         .attr("fill", (f) => colour(f.properties.speed_class));
     },
     key: () => {
-      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.6]);
-      const colour = d3.scaleLinear().domain([1, 6]).range([C.rose, C.brique]);
+      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.7]);
+      const colour = d3.scaleLinear().domain([1, 6]).range([C.olive, C.pistache]);
       return [1, 3, 5, 6].map((k) =>
         `<svg width="8" height="12"><circle cx="4" cy="6" r="${size(k)}" fill="${colour(k)}"/></svg>`
       ).join("") + " &lt;10 · 30–100 · 250–500 · 500+ Mbps";
@@ -191,17 +198,18 @@ const LAYERS = [
     desc: "Data centres mapped in OpenStreetMap.",
     draw: (g, path, projection, d) => {
       const pts = d.dc.features.map((f) => projection(f.geometry.coordinates));
-      // A soft halo first, then a crisp dot on top.
+      // A soft dusty-blush glow first, then a berry dot with an oat ring.
       g.selectAll("circle.halo").data(pts).join("circle")
         .attr("class", "halo")
         .attr("cx", (p) => p[0]).attr("cy", (p) => p[1])
-        .attr("r", 8).attr("fill", C.rose).attr("fill-opacity", 0.14);
+        .attr("r", 9).attr("fill", C.dustyBlush).attr("fill-opacity", 0.55);
       g.selectAll("circle.dot").data(pts).join("circle")
         .attr("class", "dot")
         .attr("cx", (p) => p[0]).attr("cy", (p) => p[1])
-        .attr("r", 2.4).attr("fill", C.cream);
+        .attr("r", 3.2).attr("fill", C.berry)
+        .attr("stroke", C.oat).attr("stroke-width", 0.8);
     },
-    key: () => `<svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="${C.rose}" fill-opacity=".2"/><circle cx="7" cy="7" r="1.8" fill="${C.cream}"/></svg> one site`,
+    key: () => `<svg width="16" height="16"><circle cx="8" cy="8" r="7" fill="${C.dustyBlush}" fill-opacity=".5"/><circle cx="8" cy="8" r="2.8" fill="${C.berry}" stroke="${C.oat}" stroke-width=".8"/></svg> one site`,
   },
 ];
 
@@ -426,6 +434,14 @@ function setupAnimation() {
   scrub.addEventListener("input", () => {
     cancelAnimationFrame(frame);
     setT(Number(scrub.value));
+  });
+
+  // Day / Night theme. Setting data-theme on <html> switches the CSS
+  // role colours (see the top of style.css).
+  document.getElementById("btn-theme").addEventListener("click", (e) => {
+    const night = root.dataset.theme !== "night";
+    root.dataset.theme = night ? "night" : "day";
+    e.target.textContent = night ? "Day" : "Night";
   });
 
   // Space bar replays.
