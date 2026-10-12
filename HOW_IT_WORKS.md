@@ -199,7 +199,7 @@ the full exploded view. Anything in between is part-way. JavaScript only has to 
 `requestAnimationFrame`. The slider sets `t` directly, so you can scrub through it.
 
 **Why it's a true axonometric:** there is no CSS `perspective`, so things further
-away don't get smaller. Parallel lines stay parallel, like a hand-drawn axon.
+away don't get smaller. Parallel lines stay parallel, like a hand-drawn axo.
 
 **The poles** (vertical lines through Dublin, Cork and so on) are thin `div`s stood
 upright with `rotateX(90deg)`. Their labels are rotated back by the same angles in

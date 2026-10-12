@@ -57,19 +57,18 @@ CELL = 0.05  # size of our summary squares, in degrees
 
 
 def speed_class(mbps: float) -> int:
-    """Put a speed into one of 6 groups, used for colour on the map.
-    30 Mbps is the EU's old 'basic broadband' line, so it is a key break."""
-    if mbps < 10:
-        return 1
+    """Put a speed into one of 5 groups, used for colour on the map.
+    30 Mbps is the EU's 'basic broadband' line, so everything below it
+    is one group: the slowest."""
     if mbps < 30:
-        return 2
+        return 1
     if mbps < 100:
-        return 3
+        return 2
     if mbps < 250:
-        return 4
+        return 3
     if mbps < 500:
-        return 5
-    return 6
+        return 4
+    return 5
 
 
 if __name__ == "__main__":

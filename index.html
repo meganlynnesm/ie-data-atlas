@@ -11,7 +11,7 @@
   A tag's "class" is a label the CSS and JS use to find it.
   An "id" is like a class, but unique: only one element has it.
 -->
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
   <!-- The <head> holds settings and links, nothing visible. -->
   <meta charset="utf-8">
@@ -47,30 +47,34 @@
       <div class="buttons">
         <button id="btn-play" type="button">▶ Play</button>
         <button id="btn-flat" type="button">Flat</button>
-        <button id="btn-axon" type="button">Axon</button>
-        <button id="btn-theme" type="button">Night</button>
+        <button id="btn-axon" type="button">Axo</button>
+        <button id="btn-theme" type="button">Day</button>
       </div>
-      <!-- A slider from 0 (flat) to 1 (fully exploded). -->
+      <!-- A slider from 0 (flat) to 1 (fully exploded axo). -->
       <label class="scrub">
         <span>Flat</span>
         <input id="scrub" type="range" min="0" max="1" step="0.001" value="0">
-        <span>Axon</span>
+        <span>Axo</span>
       </label>
     </section>
 
     <!-- LEGEND. Empty for now: map.js fills it in from the layer list,
          so the legend and the map can never disagree. -->
     <section>
-      <h2>Layers <span class="hint">hover to isolate</span></h2>
+      <h2>Layers <span class="hint">click to turn on/off · hover to isolate</span></h2>
       <ol id="legend" class="legend"></ol>
     </section>
 
+    <!-- Every source is a link, so readers can check the data themselves. -->
     <footer class="credits">
       <p>
-        Data: Irish Peat Soils Map, Gilet, Morley &amp; Flynn 2024, Geoderma (CC BY 4.0) ·
-        © OpenStreetMap contributors (ODbL) · Speedtest® by Ookla®
-        Global Fixed Network Performance Maps, Q2 2026 (CC BY-NC-SA 4.0) ·
-        Boundaries: Natural Earth. Projection: Irish Transverse Mercator.
+        Data:
+        <a href="https://www.sciencedirect.com/science/article/pii/S0016706124001629" target="_blank" rel="noopener">Irish Peat Soils Map, Gilet, Morley &amp; Flynn 2024, Geoderma</a>
+        (<a href="https://osf.io/27hj3/" target="_blank" rel="noopener">CC BY 4.0</a>) ·
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors (ODbL)</a> ·
+        <a href="https://github.com/teamookla/ookla-open-data" target="_blank" rel="noopener">Speedtest® by Ookla® Global Fixed Network Performance Maps, Q2 2026 (CC BY-NC-SA 4.0)</a> ·
+        Boundaries: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.
+        Projection: Irish Transverse Mercator.
       </p>
     </footer>
   </aside>

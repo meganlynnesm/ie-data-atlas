@@ -8,7 +8,7 @@
     4. Draw layers   : one SVG "plane" per layer
     5. Poles         : vertical lines through key places
     6. Legend        : built from the same layer list
-    7. Animation     : move the --t dial from 0 (flat) to 1 (axon)
+    7. Animation     : move the --t dial from 0 (flat) to 1 (axo)
 
   JavaScript basics used below:
     const x = 5;          a named value that won't be reassigned
@@ -69,6 +69,8 @@ const LAYERS = [
     id: "base",
     name: "Island & counties",
     desc: "The island of Ireland, with county and district lines.",
+    // Where the data comes from. Shown as clickable links in the legend.
+    sources: [{ label: "Natural Earth", url: "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/" }],
     draw: (g, path, projection, d) => {
       // Fill the island faintly, then draw county lines on top.
       g.append("path")
@@ -96,6 +98,11 @@ const LAYERS = [
   {
     id: "peat",
     name: "Peat soils",
+    sources: [
+      { label: "Gilet et al. 2024, Geoderma", url: "https://www.sciencedirect.com/science/article/pii/S0016706124001629" },
+      { label: "IPSM data (CC BY 4.0)", url: "https://osf.io/27hj3/" },
+      { label: "OpenStreetMap (NI)", url: "https://www.openstreetmap.org/copyright" },
+    ],
     desc: "Main peat type in each ~1.3 km square, from the Irish Peat Soils Map " +
           "(Gilet et al. 2024). Brighter = more of the square is peat. " +
           "It covers the Republic only, so Northern Ireland shows OpenStreetMap bogs as outlines.",
@@ -138,6 +145,7 @@ const LAYERS = [
   {
     id: "wind",
     name: "Wind farms",
+    sources: [{ label: "OpenStreetMap (ODbL)", url: "https://www.openstreetmap.org/copyright" }],
     desc: "Wind farms in OpenStreetMap, sized by capacity (MW).",
     draw: (g, path, projection, d) => {
       // A square-root scale: circle AREA (not radius) grows with MW,
@@ -166,13 +174,14 @@ const LAYERS = [
   {
     id: "broadband",
     name: "Broadband speed",
+    sources: [{ label: "Speedtest® by Ookla®, Q2 2026 (CC BY-NC-SA 4.0)", url: "https://github.com/teamookla/ookla-open-data" }],
     desc: "Average fixed download speed from Ookla speed tests. Olive = slow, pistache = fast. Slower places are also drawn bigger.",
     draw: (g, path, projection, d) => {
-      // speed_class goes 1 (slowest) to 6 (fastest).
+      // speed_class goes 1 (slowest, under 30 Mbps) to 5 (fastest, 500+).
       // Colour ramp: olive (slow, dark end) -> pistache (fast, light end).
       // Size runs the other way so SLOW areas still stand out.
-      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.7]);
-      const colour = d3.scaleLinear().domain([1, 6]).range([C.olive, C.pistache]);
+      const size = d3.scaleLinear().domain([1, 5]).range([2.4, 0.7]);
+      const colour = d3.scaleLinear().domain([1, 5]).range([C.olive, C.pistache]);
 
       g.selectAll("circle")
         .data(d.broadband.features)
@@ -184,17 +193,21 @@ const LAYERS = [
         .attr("fill", (f) => colour(f.properties.speed_class));
     },
     key: () => {
-      const size = d3.scaleLinear().domain([1, 6]).range([2.4, 0.7]);
-      const colour = d3.scaleLinear().domain([1, 6]).range([C.olive, C.pistache]);
-      return [1, 3, 5, 6].map((k) =>
-        `<svg width="8" height="12"><circle cx="4" cy="6" r="${size(k)}" fill="${colour(k)}"/></svg>`
-      ).join("") + " &lt;10 · 30–100 · 250–500 · 500+ Mbps";
+      const size = d3.scaleLinear().domain([1, 5]).range([2.4, 0.7]);
+      const colour = d3.scaleLinear().domain([1, 5]).range([C.olive, C.pistache]);
+      const labels = ["&lt;30", "30–100", "100–250", "250–500", "500+ Mbps"];
+      // One dot + label per speed group.
+      return labels.map((label, i) =>
+        `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:4px">
+           <svg width="8" height="12"><circle cx="4" cy="6" r="${size(i + 1)}" fill="${colour(i + 1)}"/></svg>${label}</span>`
+      ).join("");
     },
   },
 
   {
     id: "datacentres",
     name: "Data centres",
+    sources: [{ label: "OpenStreetMap (ODbL)", url: "https://www.openstreetmap.org/copyright" }],
     desc: "Data centres mapped in OpenStreetMap.",
     draw: (g, path, projection, d) => {
       const pts = d.dc.features.map((f) => projection(f.geometry.coordinates));
@@ -349,19 +362,48 @@ async function main() {
   const legend = d3.select("#legend");
   LAYERS.slice().reverse().forEach((layer) => {
     const n = LAYERS.indexOf(layer) + 1;
-    legend.append("li")
-      .html(`<span class="num">${String(n).padStart(2, "0")}</span>
-             <span class="name">${layer.name}</span>
+    // The plane on the map that belongs to this legend item.
+    const plane = stack.select(`.plane[data-layer="${layer.id}"]`);
+
+    const item = legend.append("li")
+      // role/tabindex/aria-pressed make the item work like a button for
+      // keyboard users and screen readers, not just for mouse clicks.
+      .attr("role", "button")
+      .attr("tabindex", 0)
+      .attr("aria-pressed", "true")
+      .html(`<span class="box" aria-hidden="true"></span>
+             <span class="name"><span class="num">${String(n).padStart(2, "0")}</span>${layer.name}</span>
              <span class="desc">${layer.desc}</span>
-             <span class="key">${layer.key()}</span>`)
-      // Hover = isolate this layer on the map. "on" adds an event listener.
-      .on("mouseenter", () => {
-        stack.classed("isolate", true);
-        stack.selectAll(".plane").classed("on", function () {
-          return this.dataset.layer === layer.id;
-        });
-      })
-      .on("mouseleave", () => stack.classed("isolate", false));
+             <span class="key">${layer.key()}</span>
+             <span class="src">Source: ${layer.sources.map((src) =>
+               `<a href="${src.url}" target="_blank" rel="noopener">${src.label}</a>`).join(" · ")}</span>`);
+
+    // CLICK = turn the layer on or off.
+    // classed("off", ...) adds the class "off" when the second value is true.
+    function toggle() {
+      const nowOff = !plane.classed("off");
+      plane.classed("off", nowOff);
+      item.classed("off", nowOff).attr("aria-pressed", String(!nowOff));
+    }
+    item.on("click", toggle);
+    item.on("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();       // stop the page scrolling
+        e.stopPropagation();      // stop the Space bar also replaying the animation
+        toggle();
+      }
+    });
+    // Clicking a source link opens it, without also switching the layer.
+    item.selectAll("a").on("click", (e) => e.stopPropagation());
+
+    // HOVER = isolate this layer (fade the others) while the mouse is over it.
+    item.on("mouseenter", () => {
+      stack.classed("isolate", true);
+      stack.selectAll(".plane").classed("on", function () {
+        return this.dataset.layer === layer.id;
+      });
+    });
+    item.on("mouseleave", () => stack.classed("isolate", false));
   });
 
   // ---- 7. ANIMATION --------------------------------------------------
