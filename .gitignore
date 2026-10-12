@@ -221,3 +221,5 @@ __marimo__/
 
 # Raw downloads are large and can be re-made with scripts/01_fetch_osm.py
 data/raw/*.json
+# The peat soils download is large; get it from https://osf.io/27hj3/
+data/raw/IPSM_shared_june24/

@@ -21,6 +21,8 @@ The project has two halves, written in two languages:
  03_process_layers.py clean + grid          ──►  data/processed/*.geojson  ──►  map.js reads them,
         │                                                                        draws 5 layers,
  04_fetch_broadband.py Ookla speeds                                              animates them
+        │
+ 05_peat_soils.py     IPSM peat raster
 ```
 
 **Why split it like this?** Downloading and cleaning data is slow and only needs to
@@ -59,7 +61,11 @@ python scripts/01_fetch_osm.py
 python scripts/02_make_base.py
 python scripts/03_process_layers.py
 python scripts/04_fetch_broadband.py
+python scripts/05_peat_soils.py
 ```
+
+Step 5 needs one manual download first: get `IPSM_shared_june24.zip` from
+[osf.io/download/jwg6f](https://osf.io/download/jwg6f/) and unzip it into `data/raw/`.
 
 Each one prints what it did and tells you the next step.
 
@@ -105,6 +111,16 @@ Ireland, clips, simplifies, and dissolves the counties into one island outline.
 huge *Parquet* file. **DuckDB** can run a SQL query on that file over the internet
 and download only the rows inside Ireland's box. The query also averages the small
 Ookla tiles into bigger 0.05° squares, *weighted by the number of tests*.
+
+**05 · Peat soils (raster).** Every layer so far was *vector* (points and shapes).
+The Irish Peat Soils Map is a *raster*: a grid of 100 m pixels, like a photo, where
+each pixel holds a number (0 = not peat, 1 = raised bog, 2 = lowland blanket bog, and
+so on). The script reads it with `rasterio`, finds where every pixel is, converts
+those positions from the Irish Grid (EPSG:29902, in metres) to longitude/latitude with
+`pyproj`, and counts the pixels inside each of our ~1.3 km squares. Each square ends
+up with two numbers: how much of its land is peat, and the most common peat type. In
+QGIS terms, this is like *Zonal statistics* with a *majority* rule. The map only covers
+the Republic, so the script fills Northern Ireland with the OSM bog squares from step 3.
 
 ### GeoJSON in 30 seconds
 

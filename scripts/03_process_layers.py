@@ -9,8 +9,10 @@ GeoJSON files to data/processed/:
 
     data_centres.geojson  -> one point per data centre, with name and operator
     wind_farms.geojson    -> one point per wind farm, with name and capacity (MW)
-    peatland_grid.geojson -> a grid of ~1.3 km squares; each square says what
-                             share of it (0 to 1) is covered by bog
+    peatland_osm_grid.geojson -> a grid of ~1.3 km squares; each square says
+                             what share of it (0 to 1) is mapped as bog in OSM.
+                             (Step 5 swaps in the better IPSM peat map and keeps
+                             these OSM squares only for Northern Ireland.)
 
 Why turn bogs into a grid?
 --------------------------
@@ -207,7 +209,7 @@ def make_peatland_grid():
     # Join the numbers back onto the cell rectangles (in lat/lon again).
     result = grid.merge(per_cell[["row", "col", "coverage"]], on=["row", "col"])
     result = result[result["coverage"] >= 0.05]     # skip near-empty cells
-    result.to_file(OUT / "peatland_grid.geojson", driver="GeoJSON",
+    result.to_file(OUT / "peatland_osm_grid.geojson", driver="GeoJSON",
                    COORDINATE_PRECISION=4)
     print(f"  peatland cells: {len(result)}")
 

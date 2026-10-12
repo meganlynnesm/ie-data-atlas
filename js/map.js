@@ -39,6 +39,16 @@ const C = {
   cream:    "#F3ECE4",
 };
 
+// Peat types from the Irish Peat Soils Map, keyed by the code in the data.
+// Colours are earthy tints built from the palette's pistache, olive and cream.
+const PEAT_TYPES = {
+  1: { name: "Raised bog",              colour: "#B9AC39" },  // pistache
+  2: { name: "Lowland blanket bog",     colour: "#DCD38A" },  // light pistache
+  3: { name: "Mountain blanket bog",    colour: "#F3ECE4" },  // cream
+  4: { name: "Fen",                     colour: "#FFD2D9" },  // blush
+  5: { name: "Other peat soil",         colour: "#7A6E22" },  // lifted olive
+};
+
 // Where the data lives (relative to index.html).
 const DATA = "data/processed/";
 
@@ -79,21 +89,44 @@ const LAYERS = [
 
   {
     id: "peat",
-    name: "Peatland",
-    desc: "Share of each ~1.3 km square mapped as bog in OpenStreetMap.",
+    name: "Peat soils",
+    desc: "Main peat type in each ~1.3 km square, from the Irish Peat Soils Map " +
+          "(Gilet et al. 2024). Brighter = more of the square is peat. " +
+          "It covers the Republic only, so Northern Ireland shows OpenStreetMap bogs as outlines.",
     draw: (g, path, projection, d) => {
-      g.selectAll("path")
-        .data(d.peat.features)
+      // The IPSM squares and the OSM (Northern Ireland) squares are drawn
+      // differently, so we split them with .filter() first.
+      const ipsm = d.peat.features.filter((f) => f.properties.source === "ipsm");
+      const osm = d.peat.features.filter((f) => f.properties.source === "osm");
+
+      g.selectAll("path.ipsm")
+        .data(ipsm)
         .join("path")
+        .attr("class", "ipsm")
         .attr("d", path)
-        .attr("fill", C.pistache)
+        // Look up this square's colour from its peat type code.
+        .attr("fill", (f) => PEAT_TYPES[f.properties.type_code].colour)
         // An arrow function as the value: D3 calls it once per feature (f),
         // so each square gets its own opacity from its "coverage" value.
-        .attr("fill-opacity", (f) => 0.15 + 0.85 * f.properties.coverage);
+        .attr("fill-opacity", (f) => 0.2 + 0.8 * f.properties.coverage);
+
+      // OSM squares: outline only, to show they come from a weaker source.
+      g.selectAll("path.osm")
+        .data(osm)
+        .join("path")
+        .attr("class", "osm")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", C.pistache)
+        .attr("stroke-width", 0.6);
     },
-    key: () => [0.2, 0.5, 1].map((v) =>
-      `<svg width="12" height="12"><rect width="12" height="12" fill="${C.pistache}" fill-opacity="${0.15 + 0.85 * v}"/></svg>`
-    ).join("") + " low → full cover",
+    // Object.values() turns the PEAT_TYPES object into a list we can loop over.
+    key: () => Object.values(PEAT_TYPES).map((t) =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">
+         <svg width="10" height="10"><rect width="10" height="10" fill="${t.colour}"/></svg>${t.name}</span>`
+    ).join("") +
+      `<span style="display:inline-flex;align-items:center;gap:4px">
+         <svg width="10" height="10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="${C.pistache}"/></svg>NI bog (OSM)</span>`,
   },
 
   {
