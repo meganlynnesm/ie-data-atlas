@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Raw downloads are large and can be re-made with scripts/01_fetch_osm.py
+data/raw/*.json

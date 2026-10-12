@@ -1,0 +1,282 @@
+/*
+  style.css : how everything LOOKS
+  =================================
+  CSS is a list of rules:   selector { property: value; }
+  The selector says which elements the rule applies to:
+      .panel      -> elements with class="panel"
+      #stack      -> the element with id="stack"
+      .plane svg  -> any <svg> inside an element with class="plane"
+*/
+
+/* ---------------------------------------------------------------
+   1. COLOUR TOKENS
+   ":root" is the whole page. Variables start with "--" and are used
+   later with var(--name). Change a colour here and it changes
+   everywhere. These are the colloquium palette colours.
+---------------------------------------------------------------- */
+:root {
+  --off-black: #15120F;
+  --brique:    #761C28;
+  --blush:     #FFD2D9;
+  --rose:      #FF88BE;
+  --pistache:  #B9AC39;
+  --olive:     #433B0C;
+  --cream:     #F3ECE4;
+
+  --ink-dim: rgba(243, 236, 228, 0.55);   /* cream at 55% opacity */
+  --line:    rgba(243, 236, 228, 0.22);
+
+  /* THE ANIMATION DIAL.
+     --t goes from 0 (flat map) to 1 (exploded axonometric).
+     map.js changes this one number; every 3D rule below reads it. */
+  --t: 0;
+
+  /* The axonometric "camera". Try changing these and reloading! */
+  --gap:    150px;   /* space between layers when fully exploded */
+  --tilt:   60deg;   /* how far the stack tips back (0 = top-down view) */
+  --spin:  -38deg;   /* how far it turns in plan */
+  --shrink: 0.36;    /* how much smaller the exploded view gets */
+  --lift:   235px;   /* moves the exploded stack down so it stays centred */
+}
+
+/* box-sizing: border-box makes width include padding (less maths). */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--off-black);
+  color: var(--cream);
+  font-family: "Archivo Narrow", system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------------
+   2. PAGE LAYOUT
+   CSS Grid splits the page into columns: a 320px panel and a
+   stage that takes the rest ("1fr" = one share of the leftover).
+---------------------------------------------------------------- */
+body {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  overflow: hidden;
+}
+
+.panel {
+  padding: 32px 28px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rose);
+  margin: 0 0 10px;
+}
+
+h1 {
+  font-size: 34px;
+  line-height: 1.02;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  margin: 0 0 12px;
+}
+
+.lede { color: var(--ink-dim); font-size: 15px; line-height: 1.4; margin: 0; }
+
+h2 {
+  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+.hint { color: var(--ink-dim); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+
+/* ---------------------------------------------------------------
+   3. CONTROLS
+---------------------------------------------------------------- */
+.buttons { display: flex; gap: 8px; margin-bottom: 14px; }
+
+button {
+  font: 500 12px "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+/* ":hover" applies only while the mouse is over the element. */
+button:hover { border-color: var(--cream); }
+
+.scrub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 11px "IBM Plex Mono", monospace;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+.scrub input { flex: 1; accent-color: var(--rose); }
+
+/* ---------------------------------------------------------------
+   4. LEGEND (filled in by map.js)
+---------------------------------------------------------------- */
+.legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.legend li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 4px 10px;
+  padding: 8px 6px;
+  cursor: default;
+  border-left: 2px solid transparent;
+}
+.legend li:hover { border-left-color: var(--rose); background: rgba(243,236,228,0.04); }
+.legend .num  { font: 11px "IBM Plex Mono", monospace; color: var(--ink-dim); padding-top: 2px; }
+.legend .name { font-size: 15px; text-transform: uppercase; letter-spacing: 0.04em; }
+.legend .desc { grid-column: 2; font-size: 13px; color: var(--ink-dim); line-height: 1.35; }
+.legend .key  { grid-column: 2; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+                font: 10px "IBM Plex Mono", monospace; color: var(--ink-dim); margin-top: 4px; }
+.legend .key svg { display: block; }
+
+.credits { margin-top: auto; font-size: 11px; line-height: 1.45; color: var(--ink-dim); }
+.credits p { margin: 0; }
+
+/* ---------------------------------------------------------------
+   5. THE 3D STAGE  (the interesting part!)
+
+   How 3D works in CSS:
+   - Every element can be moved with "transform": translate (slide),
+     rotate (turn), scale (resize). translateZ moves it toward you.
+   - "transform-style: preserve-3d" tells the browser that children
+     live in the SAME 3D space as their parent, instead of being
+     flattened onto it. Without it, the layers could not separate.
+   - We use NO "perspective", so far things don't shrink. That is
+     exactly what makes it an AXONOMETRIC (parallel) drawing rather
+     than a perspective one.
+---------------------------------------------------------------- */
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;          /* centre the stack in the stage */
+  overflow: hidden;
+}
+
+.stack {
+  position: relative;
+  /* width and height are set by map.js to match the map size */
+  transform-style: preserve-3d;
+
+  /* Read this right-to-left, like the browser does:
+       1. scale  : shrink a bit so the tall exploded stack fits
+       2. rotateZ: spin the map in its own plane
+       3. rotateX: tip it back, like laying a sheet on a table
+       4. translateY: nudge down so the stack stays centred
+       5. scale(--fit): shrink everything on small screens (set by map.js)
+     Each angle is multiplied by --t, so at t = 0 nothing moves
+     (a flat map) and at t = 1 we get the full axonometric. */
+  transform:
+    scale(var(--fit, 1))
+    translateY(calc(var(--t) * var(--lift)))
+    rotateX(calc(var(--t) * var(--tilt)))
+    rotateZ(calc(var(--t) * var(--spin)))
+    scale(calc(1 - var(--t) * var(--shrink)));
+}
+
+/* One plane per layer, all stacked in the same spot. */
+.plane {
+  position: absolute;
+  inset: 0;                     /* top/right/bottom/left = 0: fill the stack */
+  pointer-events: none;
+
+  /* --i is the layer number (0 = bottom), set by map.js.
+     Lift each layer by i x gap x t. The tiny "+ 0.5px" keeps
+     layers from flickering when they share the same height at t = 0. */
+  transform: translateZ(calc(var(--i) * (var(--gap) * var(--t) + 0.5px)));
+  transition: opacity 0.3s;
+}
+
+/* The thin frame around each plane, like the reference drawing.
+   It fades in as the layers separate (opacity follows --t). */
+.plane .frame {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(243, 236, 228, 0.45);
+  opacity: var(--t);
+}
+
+/* The layer name, written along the left edge of each plane,
+   reading downwards like the reference drawing. Rotating 90deg around
+   the top-left corner swings the text down the edge, just outside it. */
+.plane .label {
+  position: absolute;
+  left: -10px;
+  top: 0;
+  transform-origin: left top;
+  transform: rotate(90deg);
+  white-space: nowrap;
+  font: 600 20px "Archivo Narrow", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* Only fade in during the last 40% of the animation, so labels don't
+     pile up while the layers are still close together.
+     (t - 0.6) x 2.5 is 0 at t = 0.6 and 1 at t = 1; the browser treats
+     anything below 0 as 0.) */
+  opacity: calc((var(--t) - 0.6) * 2.5);
+}
+
+.plane svg { position: absolute; inset: 0; overflow: visible; }
+
+/* When the mouse is over a legend item, map.js adds class "isolate"
+   to the stack and "on" to the matching plane. Others fade out. */
+.stack.isolate .plane:not(.on) { opacity: 0.1; }
+
+/* ---------------------------------------------------------------
+   6. POLES: vertical lines that pierce all layers at key places
+---------------------------------------------------------------- */
+.pole {
+  position: absolute;
+  width: 1px;
+  transform-style: preserve-3d;
+  /* translate to the spot, then stand the line up. rotateX(90deg)
+     turns a line lying flat "down the page" into one pointing up
+     out of the map. Its length grows with --t. */
+  transform: rotateX(90deg);
+  transform-origin: top center;
+  background: var(--cream);
+  opacity: calc(var(--t) * 0.8);
+}
+
+/* The text at the top of each pole. It is turned back by the same
+   angles as the stack, in reverse, so it always faces you. */
+.pole-label {
+  position: absolute;
+  transform-style: preserve-3d;
+  white-space: nowrap;
+  font: 500 11px "IBM Plex Mono", monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: calc((var(--t) - 0.6) * 2.5);
+}
+.pole-label span { position: absolute; bottom: 2px; }
+.pole-label .right { left: 5px; }
+.pole-label .left  { right: 5px; }   /* right: 5px = end 5px left of the line */
+
+/* ---------------------------------------------------------------
+   7. SMALL SCREENS: put the panel above the map.
+   "@media" rules only apply when the condition is true.
+---------------------------------------------------------------- */
+@media (max-width: 800px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto 70vh; overflow: auto; }
+  .panel { border-right: 0; border-bottom: 1px solid var(--line); padding: 20px 16px; }
+}

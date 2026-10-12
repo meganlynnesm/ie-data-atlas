@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  index.html : the SKELETON of the page
+  =====================================
+  A web page is made of three languages, each in its own file here:
+    HTML (this file)    -> WHAT is on the page: headings, buttons, empty boxes
+    CSS  (css/style.css) -> HOW it looks: colours, sizes, positions, 3D
+    JS   (js/map.js)     -> WHAT it does: loads data, draws the map, animates
+
+  HTML is written as nested "tags": <tag attribute="value"> content </tag>.
+  A tag's "class" is a label the CSS and JS use to find it.
+  An "id" is like a class, but unique: only one element has it.
+-->
+<html lang="en">
+<head>
+  <!-- The <head> holds settings and links, nothing visible. -->
+  <meta charset="utf-8">
+  <!-- Makes the page scale properly on phones. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ireland Data Atlas</title>
+
+  <!-- Fonts from Google Fonts: a narrow sans for labels, a mono for numbers. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Our own styles. -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <!-- LEFT PANEL: title, controls, legend, credits -->
+  <aside class="panel">
+    <header>
+      <p class="kicker">G4DP · Assignment 01</p>
+      <h1>Ireland’s data<br>landscape</h1>
+      <p class="lede">
+        Where Ireland’s data centres sit, set against the peat, wind and
+        broadband of the island around them.
+      </p>
+    </header>
+
+    <!-- CONTROLS. The JS file listens for clicks on these. -->
+    <section class="controls" aria-label="Animation controls">
+      <div class="buttons">
+        <button id="btn-play" type="button">▶ Play</button>
+        <button id="btn-flat" type="button">Flat</button>
+        <button id="btn-axon" type="button">Axon</button>
+      </div>
+      <!-- A slider from 0 (flat) to 1 (fully exploded). -->
+      <label class="scrub">
+        <span>Flat</span>
+        <input id="scrub" type="range" min="0" max="1" step="0.001" value="0">
+        <span>Axon</span>
+      </label>
+    </section>
+
+    <!-- LEGEND. Empty for now: map.js fills it in from the layer list,
+         so the legend and the map can never disagree. -->
+    <section>
+      <h2>Layers <span class="hint">hover to isolate</span></h2>
+      <ol id="legend" class="legend"></ol>
+    </section>
+
+    <footer class="credits">
+      <p>
+        Data: © OpenStreetMap contributors (ODbL) · Speedtest® by Ookla®
+        Global Fixed Network Performance Maps, Q2 2026 (CC BY-NC-SA 4.0) ·
+        Boundaries: Natural Earth. Projection: Irish Transverse Mercator.
+      </p>
+    </footer>
+  </aside>
+
+  <!-- RIGHT SIDE: the 3D stage. map.js puts one "plane" per layer inside .stack -->
+  <main class="stage">
+    <div id="stack" class="stack"></div>
+  </main>
+
+  <!-- D3: a library for drawing data on web pages. We use it to turn
+       longitude/latitude into screen positions and to draw SVG shapes. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <!-- Our code. It must come after D3 because it uses D3. -->
+  <script src="js/map.js"></script>
+</body>
+</html>
