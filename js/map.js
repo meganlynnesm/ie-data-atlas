@@ -3,7 +3,7 @@
   ============================
   The plan, in order:
     1. Settings      : sizes, colours, the list of layers
-    2. Load data     : read the GeoJSON files made by the Python scripts
+    2. Load data     : read the GeoJSON files 
     3. Projection    : turn longitude/latitude into x/y pixels
     4. Draw layers   : one SVG "plane" per layer
     5. Poles         : vertical lines through key places
@@ -68,7 +68,7 @@ const LAYERS = [
   {
     id: "base",
     name: "Island & counties",
-    desc: "The island of Ireland, with county and district lines.",
+    desc: "The island of Ireland, with county lines drawn. Northern Ireland is part of the base map, so it is always visible.",
     // Where the data comes from. Shown as clickable links in the legend.
     sources: [{ label: "Natural Earth", url: "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/" }],
     draw: (g, path, projection, d) => {
@@ -103,9 +103,9 @@ const LAYERS = [
       { label: "IPSM data (CC BY 4.0)", url: "https://osf.io/27hj3/" },
       { label: "OpenStreetMap (NI)", url: "https://www.openstreetmap.org/copyright" },
     ],
-    desc: "Main peat type in each ~1.3 km square, from the Irish Peat Soils Map " +
+    desc: "Main peat type in each ~1.3 km square, from the Irish Peat Soils Map by IPCC " +
           "(Gilet et al. 2024). Brighter = more of the square is peat. " +
-          "It covers the Republic only, so Northern Ireland shows OpenStreetMap bogs as outlines.",
+          "This only covers the Republic of Ireland, Northern Ireland shown with OpenStreetMap bogs as outlines TBA.",
     draw: (g, path, projection, d) => {
       // The IPSM squares and the OSM (Northern Ireland) squares are drawn
       // differently, so we split them with .filter() first.
@@ -146,7 +146,7 @@ const LAYERS = [
     id: "wind",
     name: "Wind farms",
     sources: [{ label: "OpenStreetMap (ODbL)", url: "https://www.openstreetmap.org/copyright" }],
-    desc: "Wind farms in OpenStreetMap, sized by capacity (MW).",
+    desc: "Wind farms sourced from OpenStreetMap Data and sized by total capacity (MW).",
     draw: (g, path, projection, d) => {
       // A square-root scale: circle AREA (not radius) grows with MW,
       // which is how our eyes judge circle size.
@@ -175,7 +175,7 @@ const LAYERS = [
     id: "broadband",
     name: "Broadband speed",
     sources: [{ label: "Speedtest® by Ookla®, Q2 2026 (CC BY-NC-SA 4.0)", url: "https://github.com/teamookla/ookla-open-data" }],
-    desc: "Average fixed download speed from Ookla speed tests. Olive = slow, pistache = fast. Slower places are also drawn bigger.",
+    desc: "Average fixed download speed from Ookla speed tests. Slower speeds are drawn bigger and in dark green.",
     draw: (g, path, projection, d) => {
       // speed_class goes 1 (slowest, under 30 Mbps) to 5 (fastest, 500+).
       // Colour ramp: olive (slow, dark end) -> pistache (fast, light end).
@@ -208,7 +208,7 @@ const LAYERS = [
     id: "datacentres",
     name: "Data centres",
     sources: [{ label: "OpenStreetMap (ODbL)", url: "https://www.openstreetmap.org/copyright" }],
-    desc: "Data centres mapped in OpenStreetMap.",
+    desc: "Data centres mapped using OpenStreetMap Data.",
     draw: (g, path, projection, d) => {
       const pts = d.dc.features.map((f) => projection(f.geometry.coordinates));
       // A soft dusty-blush glow first, then a berry dot with an oat ring.
@@ -231,7 +231,7 @@ const LAYERS = [
 // "side" says which side of the line the text goes, so labels don't collide.
 const POLES = [
   { lonlat: [-6.38, 53.36], label: "Dublin", side: "right" },
-  { lonlat: [-9.55, 54.15], label: "Oweninny, Mayo · 192 MW wind on bog", side: "left" },
+  { lonlat: [-9.55, 54.15], label: "Oweninny, Mayo · 192 MW capacity wind farmon bog", side: "left" },
   { lonlat: [-9.06, 53.28], label: "Galway", side: "left" },
   { lonlat: [-7.90, 53.43], label: "Athlone", side: "right" },
   { lonlat: [-8.47, 51.90], label: "Cork", side: "right" },
